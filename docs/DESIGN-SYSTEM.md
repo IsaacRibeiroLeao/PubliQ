@@ -27,6 +27,7 @@
 | `--ink` | texto primário | `#18181b` | `#fafafa` |
 | `--ink-muted` | texto secundário | `#71717a` | `#a1a1aa` |
 | `--signal` | ação primária, links, foco (automação/pipeline) | `#4338ca` | `#9b8cff` |
+| `--on-signal` | texto e ícones sobre `--signal` | `#ffffff` | `#18181b` |
 | `--ember` | destaque criativo, alertas de atenção (mídia/criação) | `#ea4f2d` | `#ff8a63` |
 | `--success` | publicado, aprovado | `#15803d` | `#4ade80` |
 | `--warning` | aguardando, expira em breve | `#b45309` | `#fbbf24` |
@@ -87,6 +88,7 @@ Raio: `6px` (controles pequenos: badge, input) · `10px` (cartões) · `999px` (
   --ink: #18181b;
   --ink-muted: #71717a;
   --signal: #4338ca;
+  --on-signal: #ffffff;
   --signal-soft: #eef2ff;
   --ember: #ea4f2d;
   --ember-soft: #fff1ec;
