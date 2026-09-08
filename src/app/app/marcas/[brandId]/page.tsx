@@ -3,7 +3,6 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { BrandForm } from "@/components/BrandForm";
 import { Progress } from "@/components/Progress";
-import { requireSession } from "@/modules/auth/session";
 import { updateBrandAction } from "@/modules/brands/actions";
 import {
   calculateBrandCompleteness,
@@ -12,6 +11,7 @@ import {
 } from "@/modules/brands/service";
 import { startMetaConnectionAction } from "@/modules/meta/actions";
 import { getMetaConnectionRepository } from "@/modules/meta/service";
+import { getCurrentWorkspaceContext } from "@/modules/workspaces/context";
 
 export interface BrandDetailPageProps {
   params: Promise<{ brandId: string }>;
@@ -22,9 +22,8 @@ export default async function BrandDetailPage({
   params,
   searchParams,
 }: BrandDetailPageProps) {
-  const session = await requireSession();
-  const membership = session.memberships[0];
-  if (!membership) notFound();
+  const context = await getCurrentWorkspaceContext();
+  const membership = context.membership;
   const { brandId } = await params;
   const repository = await getBrandRepository();
   const brand = await repository.findById(membership.workspaceId, brandId);
@@ -38,7 +37,8 @@ export default async function BrandDetailPage({
     ),
   ]);
   const query = await searchParams;
-  const canWrite = membership.role !== "VIEWER";
+  const canWrite = ["OWNER", "ADMIN", "EDITOR"].includes(membership.role);
+  const canManageMeta = ["OWNER", "ADMIN"].includes(membership.role);
   const completeness = calculateBrandCompleteness(brand);
   const updateAction = updateBrandAction.bind(
     null,
@@ -149,7 +149,7 @@ export default async function BrandDetailPage({
                 </>
               )}
             </div>
-            {canWrite ? (
+            {canManageMeta ? (
               <form action={startMetaConnectionAction} className="mt-5">
                 <input
                   type="hidden"

@@ -1,20 +1,22 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { BrandForm } from "@/components/BrandForm";
-import { requireSession } from "@/modules/auth/session";
+import { requireWorkspaceAccess } from "@/modules/auth/session";
 import { createBrandAction } from "@/modules/brands/actions";
+import { getCurrentWorkspaceContext } from "@/modules/workspaces/context";
 
 export const metadata: Metadata = {
   title: "Nova marca | PubliQ",
 };
 
 export default async function NewBrandPage() {
-  const session = await requireSession();
-  const membership = session.memberships[0];
-  if (!membership) {
-    throw new Error("Nenhum workspace disponível.");
-  }
-  const action = createBrandAction.bind(null, membership.workspaceId);
+  const context = await getCurrentWorkspaceContext();
+  await requireWorkspaceAccess(context.workspace.id, [
+    "OWNER",
+    "ADMIN",
+    "EDITOR",
+  ]);
+  const action = createBrandAction.bind(null, context.workspace.id);
 
   return (
     <div className="mx-auto grid max-w-4xl gap-7">

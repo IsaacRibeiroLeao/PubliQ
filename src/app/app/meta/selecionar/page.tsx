@@ -3,9 +3,10 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Button } from "@/components/Button";
 import { EmptyState } from "@/components/EmptyState";
-import { requireSession } from "@/modules/auth/session";
+import { requireSession, requireWorkspaceAccess } from "@/modules/auth/session";
 import { selectMetaAssetsAction } from "@/modules/meta/actions";
 import { getMetaSelection } from "@/modules/meta/selection-store";
+import { META_MANAGER_ROLES } from "@/modules/meta/workflow";
 
 export const metadata: Metadata = {
   title: "Selecionar ativos Meta | PubliQ",
@@ -29,6 +30,7 @@ export default async function MetaAssetSelectionPage({
       })
     : null;
   if (!selection) notFound();
+  await requireWorkspaceAccess(selection.workspaceId, META_MANAGER_ROLES);
 
   return (
     <div className="mx-auto grid max-w-2xl gap-6">

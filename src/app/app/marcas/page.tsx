@@ -2,8 +2,8 @@ import { Plus, Store } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { EmptyState } from "@/components/EmptyState";
-import { getCurrentSession } from "@/modules/auth/session";
 import { getBrandRepository } from "@/modules/brands/service";
+import { getCurrentWorkspaceContext } from "@/modules/workspaces/context";
 
 export const metadata: Metadata = {
   title: "Marcas | PubliQ",
@@ -15,12 +15,11 @@ export interface BrandsPageProps {
 }
 
 export default async function BrandsPage({ searchParams }: BrandsPageProps) {
-  const session = await getCurrentSession();
-  const membership = session?.memberships[0];
-  const brands = membership
-    ? await (await getBrandRepository()).list(membership.workspaceId)
-    : [];
-  const canWrite = membership?.role !== "VIEWER";
+  const context = await getCurrentWorkspaceContext();
+  const brands = await (await getBrandRepository()).list(context.workspace.id);
+  const canWrite = ["OWNER", "ADMIN", "EDITOR"].includes(
+    context.membership.role,
+  );
   const metaError = (await searchParams).metaError;
 
   return (
