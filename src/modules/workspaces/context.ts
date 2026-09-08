@@ -1,5 +1,4 @@
 import { requireSession, WorkspaceAccessError } from "@/modules/auth/session";
-import { createServerSupabaseClient } from "@/integrations/supabase/server";
 import { DEMO_WORKSPACE } from "@/shared/demo-fixtures";
 import type {
   AppSession,
@@ -36,6 +35,9 @@ async function findCurrentWorkspace(
   if (getIntegrationMode() === "mock") {
     return workspaceId === DEMO_WORKSPACE.id ? DEMO_WORKSPACE : null;
   }
+  const { createServerSupabaseClient } = await import(
+    "@/integrations/supabase/server"
+  );
   const supabase = await createServerSupabaseClient();
   const { data, error } = await supabase
     .from("workspaces")
