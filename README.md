@@ -1,8 +1,8 @@
-# ContentOS
+# PubliQ (ContentOS)
 
 SaaS multi-tenant de marketing de conteúdo para criadores, negócios e marcas pessoais. O backend vive **somente no ecossistema Supabase** (Postgres + RLS, Auth, Edge Functions, Storage, `pg_cron` e `pg_net`). O frontend é Next.js App Router.
 
-## O que está pronto
+## Funcionalidades
 
 - Chat copiloto estilo Gemini, com quick pills e cartões ricos (ética, roteiro em 3 atos, legendas IG/TikTok, ações em 1 clique).
 - Teleprompter com velocidade configurável.
@@ -12,36 +12,39 @@ SaaS multi-tenant de marketing de conteúdo para criadores, negócios e marcas p
 - Tokens de Meta/TikTok no schema `private` (o cliente nunca lê `access_token`).
 - Publicação agendada e sync de métricas via `pg_cron` → `pg_net` → Edge Functions.
 
-## Stack
+## Tecnologias (Stack)
 
 | Camada | Tecnologia |
 | --- | --- |
-| App | Next.js 16 (App Router), Tailwind CSS 4, Radix/Shadcn, Lucide |
+| App | Next.js 16 (App Router), Tailwind CSS 4, Radix/Shadcn, Lucide, React 19, TypeScript |
 | Auth | Supabase Auth (e-mail + Google) |
 | Dados | Supabase Postgres, RLS em 100% das tabelas públicas |
 | Jobs | `pg_cron` + `pg_net` |
 | Mídia | Buckets `media-raw` (privado) e `media-public` (URLs para as APIs) |
 | IA / APIs | Edge Functions Deno |
 
-## Setup local
+## Instalação e Setup Local
 
 Pré-requisitos: Docker Desktop, Node 22, Yarn.
 
+1. Clone o repositório e configure as variáveis de ambiente:
 ```bash
 cp .env.example .env.local
+```
+
+2. Instale as dependências e inicie o Supabase localmente:
+```bash
 yarn
 npx supabase start
 ```
 
-Depois de `supabase start`, copie `API URL` e a **publishable/anon key** para `.env.local`:
-
+3. Depois de `supabase start`, copie a `API URL` e a **publishable/anon key** para o seu `.env.local`:
 ```bash
 NEXT_PUBLIC_SUPABASE_URL=http://127.0.0.1:54321
 NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=<anon-or-publishable>
 ```
 
-Opcional, para publicação automática a partir do cron:
-
+4. Opcional, para publicação automática a partir do cron, execute no banco:
 ```sql
 insert into private.app_settings (key, value) values
   ('functions_url', 'http://kong:8000/functions/v1'),
@@ -49,26 +52,23 @@ insert into private.app_settings (key, value) values
 on conflict (key) do update set value = excluded.value;
 ```
 
-Suba o app e as funções:
-
+5. Suba as Edge Functions e o servidor de desenvolvimento:
 ```bash
 npx supabase functions serve --env-file .env.local
 yarn dev
 ```
 
-Abra [http://127.0.0.1:3000](http://127.0.0.1:3000), crie uma conta Starter e use o copiloto.
-
 ### Google OAuth
 
 1. Crie credenciais no Google Cloud (redirect `http://127.0.0.1:54321/auth/v1/callback`).
 2. Defina `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET`.
-3. Em `supabase/config.toml`, `enabled = true` em `[auth.external.google]`.
+3. Em `supabase/config.toml`, defina `enabled = true` em `[auth.external.google]`.
 
 ### Modelo de IA
 
 Sem `OPENAI_API_KEY`, a função `generate-content` usa um gerador local com filtro ético. Com a chave, passa a usar o modelo definido em `OPENAI_MODEL`.
 
-## Rotas
+## Uso (Rotas)
 
 | Rota | Função |
 | --- | --- |
@@ -81,40 +81,16 @@ Sem `OPENAI_API_KEY`, a função `generate-content` usa um gerador local com fil
 | `/settings` | Perfil, redes e billing |
 | `/pricing` | Planos |
 
-## Edge Functions
+### Edge Functions Disponíveis
 
-| Função | Papel |
-| --- | --- |
-| `generate-content` | Consome crédito, aplica compliance, grava roteiros e mensagens |
-| `queue-publish` | Sobe o vídeo público e enfileira `scheduled_posts` |
-| `publish-scheduled` | Worker do cron: Reels (Meta Graph) e TikTok Direct Post |
-| `sync-analytics` | Consolida métricas |
-| `summarize-analytics` | Resumo executivo |
-| `create-checkout` | Stripe / Asaas |
-| `billing-webhook` | Atualiza `plan_tier` (JWT desligado; valida assinatura/token) |
-| `connect-social` | Inicia OAuth oficial Meta/TikTok |
+- `generate-content`: Consome crédito, aplica compliance, grava roteiros e mensagens.
+- `queue-publish`: Gerencia a fila de publicação de vídeos públicos.
+- `publish-scheduled`: Realiza a publicação agendada.
+- `create-checkout`: Cria sessões de pagamento.
+- `billing-webhook`: Processa webhooks de cobrança.
+- `connect-social`: Integração com contas sociais.
+- `summarize-analytics` e `sync-analytics`: Sincronização e resumo de métricas.
 
-## Regras de negócio
+## Licença
 
-- **Starter:** 3 créditos/dia, 1 dia de pauta por request, cópia manual, sem auto-post e sem dashboard.
-- **Pro (R$ 97):** ilimitado, semana/mês, 1 IG + 1 TikTok, teleprompter, auto-post, analytics.
-- **Agency (R$ 247):** até 5 contas por rede, PDF e suporte prioritário (flag no catálogo).
-
-Créditos são atômicos (`FOR UPDATE`) na função `private.consume_prompt_credit_for`.
-
-## Segurança (desvios conscientes do SQL original)
-
-- Funções `SECURITY DEFINER` ficam no schema `private`.
-- `auth.uid()` envolvido em `(select auth.uid())` nas policies.
-- Tokens sociais fora da Data API pública.
-- `plan_tier` não pode ser alterado pelo próprio usuário via RLS.
-- `search_path` fixo em `''`.
-
-## Scripts
-
-```bash
-yarn dev
-yarn lint
-yarn typecheck
-yarn build
-```
+Licença não especificada / Uso restrito.
